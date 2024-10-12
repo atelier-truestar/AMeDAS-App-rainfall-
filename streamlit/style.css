@@ -1,0 +1,181 @@
+/* アプリケーションビューのコンテナのパディングを調整 */
+.appview-container .main .block-container {
+    padding-top: 1rem;
+    padding-right: 3rem;
+    padding-left: 3rem;
+    padding-bottom: 1rem;
+}
+/* レポートビューのコンテナのパディングを調整 */
+.reportview-container {
+    padding-top: 0rem;
+    padding-right: 3rem;
+    padding-left: 3rem;
+    padding-bottom: 0rem;
+}
+/* ヘッダーのZインデックスを設定 */
+header[data-testid="stHeader"] {
+    z-index: -1;
+}
+/* ツールバーとデコレーションエリアのZインデックスを設定 */
+div[data-testid="stToolbar"] {
+    z-index: 100;
+}
+div[data-testid="stDecoration"] {
+    z-index: 100;
+}
+/* Streamlitツールバーを非表示にして、高さを0に設定 */
+div[data-testid="stToolbar"] {
+    visibility: hidden;
+    height: 0%;
+    position: fixed;
+}
+/* Streamlitデコレーションエリアを非表示にして、高さを0に設定 */
+div[data-testid="stDecoration"] {
+    visibility: hidden;
+    height: 0%;
+    position: fixed;
+}
+/* メインメニューを非表示にして、高さを0に設定 */
+#MainMenu {
+    visibility: hidden;
+    height: 0%;
+}
+/* ヘッダーを非表示にして、高さを0に設定 */
+header {
+    visibility: hidden;
+    height: 0%;
+}
+/* フッターを非表示にして、高さを0に設定 */
+footer {
+    visibility: hidden;
+    height: 0%;
+}
+
+/* ここから細かいコンポーネントのスタイル設定 */
+/* スライドインアニメーションのキーフレーム定義 */
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+/* メインコンテンツのスタイルを設定、スライドインアニメーションを追加 */
+.main {
+    padding: 2rem;
+    animation: slideIn 1.5s ease-in-out;
+}
+/* テキスト拡大縮小アニメーションのキーフレーム定義 */
+@keyframes textGrow {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+/* h1要素のスタイルとアニメーションを設定 */
+h1 {
+    color: #007bff;  /* テキストの色を青に設定 */
+    font-family: 'Helvetica Neue', sans-serif;  /* フォントを設定 */
+    font-size: 3rem;  /* フォントサイズを設定 */
+    font-weight: 900;  /* フォントの太さを設定 */
+    text-align: center;  /* テキストを中央揃えに設定 */
+    animation: textGrow 4s infinite;  /* スライドインとテキストの拡大縮小アニメーションを設定 */
+}
+/* h5要素のスタイルとスライドインアニメーションを設定 */
+h5 {
+    font-size: 1.1rem;
+    color: #6c757d;
+    text-align: center;
+    font-style: italic;
+    margin-top: 2rem;
+}
+/* st.codeのCSSを変更 */
+pre {
+    color: black;
+    text-align: center;
+    margin-top: 2rem;
+}
+/* SelectboxとTextInputのスタイルを設定 */
+.stSelectbox, .stTextInput {
+    background-color: white;  /* 背景色を白に設定 */
+    border-radius: 5px;  /* 角を丸く設定 */
+    border: 1px solid #ced4da;  /* 枠線のスタイルを設定 */
+    padding: 0.5rem;  /* 内側の余白を設定 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);  /* シャドウを追加 */
+    transition: box-shadow 0.5s ease;  /* シャドウのトランジションを設定 */
+}
+/* SelectboxとTextInputのフォーカス時のスタイルを設定 */
+.stSelectbox:focus, .stTextInput:focus {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-color: #007bff;
+    outline: none;
+}
+/* DataFrame表示エリアのスタイルを設定 */
+.stDataFrame {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    max-width: 100%;
+    width: 100%;
+    transition: box-shadow 0.5s ease;
+}
+/* DataFrame表示エリアのホバー時のスタイルを設定 */
+.stDataFrame:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+}
+/* ボタンのスタイルを設定 */
+.stButton>button {
+    position: relative;
+    overflow: hidden;  /* コンテンツのオーバーフローを隠す */
+    background-color: #007bff;  /* 背景色を青に設定 */
+    color: white;  /* テキスト色を白に設定 */
+    font-size: 1rem;  /* フォントサイズを設定 */
+    font-weight: 600;  /* フォントの太さを設定 */
+    border-radius: 5px;  /* 角を丸く設定 */
+    padding: 0.5rem 1rem;  /* 内側の余白を設定 */
+    border: none;  /* 枠線を削除 */
+    cursor: pointer;  /* カーソルをポインタに設定 */
+    transition: transform 0.5s ease, box-shadow 0.5s ease, background-color 0.5s ease;  /* トランジションを設定 */
+}
+/* ボタンスタイルを設定 */
+/* 背景スキュー効果 */
+.stButton>button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -130%;
+    background-color: #6abf1b;  
+    width: 120%;
+    height: 100%;
+    transform: skewX(-25deg);  /* 背景をスキューさせる */
+    transition: all 0.3s ease;
+    z-index: -1;  /* テキストの背後に表示 */
+    color: white;
+}
+/* ホバー時の背景アニメーション */
+.stButton>button:hover::before {
+    left: -10%;  /* 背景が右に移動 */
+    color: white;
+}
+/* ボタンのホバー時のスタイルを設定 */
+.stButton>button:hover {
+    transform: scale(1.05);  /* ホバー時に拡大 */
+    background-color: #6abf1b;  
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.5);  /* 影を追加 */
+    color: white;
+}
+/* ボタンのクリック時のスタイルを設定 */
+.stButton>button:active {
+    transform: scale(1);  /* クリック時に元のサイズに戻す */
+    background-color: white;  /* クリック時の背景色を濃い青に設定 */
+    color: white;
+}
+/* ボタンのフォーカス時のスタイルを設定 */
+.stButton>button:focus {
+    outline: none;  /* フォーカス時のアウトラインを削除 */
+    color : white !important
+}

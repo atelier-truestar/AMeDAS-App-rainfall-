@@ -1,0 +1,20 @@
+# This is a manifest.yml file, a required component of creating a Snowflake Native App. 
+# This file defines properties required by the application package, including the location of the setup script and version definitions.
+# Refer to https://docs.snowflake.com/en/developer-guide/native-apps/creating-manifest for a detailed understanding of this file. 
+
+manifest_version: 1
+
+artifacts:
+  setup_script: setup_script.sql
+  readme: README.md
+  default_streamlit: core.PODB_AMEDAS_RAINFALL_APP
+
+references:
+  - consumer_input_table:
+      label: "table to add AMeDAS data"
+      description: "選択するテーブルに住所が含まれている場合、最寄りの気象観測点のAMeDASデータを追加します。"
+      privileges:
+        - SELECT
+      object_type: Table 
+      multi_valued: false 
+      register_callback: core.REGISTER_SINGLE_REFERENCE 

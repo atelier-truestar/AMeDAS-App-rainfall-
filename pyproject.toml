@@ -1,0 +1,67 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "~3.11"
+snowflake-snowpark-python = "^1.21.1"
+snowflake-cli-labs = "~2.7"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.4"
+mypy = "^1.11.2"
+pytest = "^8.3.2"
+taskipy = "^1.13.0"
+pre-commit = "^3.8.0"
+snowflake-cli-labs = "~2.7"
+snowflake-native-apps-permission-stub = "^0.1.9"
+snowflake-snowpark-python = "^1.22.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.mypy]
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.ruff]
+# https://docs.astral.sh/ruff/settings/#top-level
+line-length = 119
+
+[tool.ruff.lint]
+# https://docs.astral.sh/ruff/rules/
+select = [
+    "N",   # pep8-naming: PEP8に準拠した命名ルール
+    "E",   # pycodestyleのエラー: PEP8に準拠したコーディングルール
+    "W",   # pycodestyleの警告
+    "D",   # pydocstyle: 特定のdocstringスタイルを強制
+    "F",   # Pyflakes: 論理エラー検知
+    "I",   # isort: インポート順ソート
+    "C90", # mccabe: 複雑度チェック
+    "S",   # flake8-bandit: セキュリティチェック
+    "B",   # flake8-bugbear: 潜在的なバグ検知
+]
+ignore = ["D415"]
+fixable = ["ALL"]
+unfixable = ["F401"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+convention = "google" # Use Google-style docstrings.
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"] # __init__.pyは未使用インポートを許容
+"tests/**" = ["D"]       #  Ignore all directories named `tests`.
+
+[tool.taskipy.variables]
+conn = ".snowflake/config.toml"
+
+[tool.taskipy.tasks]
+lint = "ruff check"
+format = "ruff format"
+snow = { cmd = "snow --config-file {conn}", use_vars = true }

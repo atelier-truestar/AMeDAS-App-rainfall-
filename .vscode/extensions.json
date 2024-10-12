@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "charliermarsh.ruff",
+    "esbenp.prettier-vscode",
+    "tamasfe.even-better-toml",
+    "redhat.vscode-yaml",
+    "ms-python.mypy-type-checker",
+    "njpwerner.autodocstring"
+  ]
+}

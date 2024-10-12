@@ -1,0 +1,163 @@
+name: 開発環境にデプロイ＆ステージ環境にインストール
+# 参考
+# - https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened]
+
+env:
+  PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.8.3"
+  STG_ACCOUNT_IDENTIFIER: "GL11283.PODB_APP_STG"
+  # 生成されるSnowflakeオブジェクト名のプレフィックス
+  # 例: _GITHUB_{{$APP_PREFIX}}_XXXXXXX_YYYY_MM_DD_HH_MM_SS_APP_PACKAGE
+  APP_PREFIX: "playground"
+
+jobs:
+  deploy-app-for-testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: poetryをインストール
+        run: pipx install poetry==${{ env.POETRY_VERSION }}
+
+      - name: Pythonのセットアップ ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: 依存パッケージをインストール
+        run: poetry install
+
+      - name: Snowflakeオブジェクト名に使用する変数を設定
+        id: set_snowflake_object_names
+        env:
+          TZ: Asia/Tokyo # タイムゾーン指定
+        run: |
+          COMMIT_SHA=$(echo $GITHUB_SHA | cut -c1-7 | tr '[:lower:]' '[:upper:]')
+          CURRENT_TIME=$(date +"%Y_%m_%d_%H_%M_%S")
+          PREFIX="_GITHUB"
+          APP_PACKAGE_NAME="${PREFIX}_${{ env.APP_PREFIX }}_${COMMIT_SHA}_${CURRENT_TIME}_APP_PACKAGE"
+          APP_NAME="${PREFIX}_${COMMIT_SHA}_${CURRENT_TIME}_APP"
+          LISTING_NAME="${PREFIX}_${COMMIT_SHA}_${CURRENT_TIME}_LISTING"
+          echo "COMMIT_SHA=${COMMIT_SHA}" >> $GITHUB_ENV
+          echo "APP_PACKAGE_NAME=${APP_PACKAGE_NAME}" >> $GITHUB_ENV
+          echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
+          echo "LISTING_NAME=${LISTING_NAME}" >> $GITHUB_ENV
+
+      - name: snowflake.local.yml(オブジェクト名称の上書き用)の生成
+        env:
+          YML_CONTENT: |
+            definition_version: 1
+            native_app:
+              package:
+                name: ${{ env.APP_PACKAGE_NAME }}
+              application:
+                name: ${{ env.APP_NAME }}
+                debug: true
+        run: |
+          echo "$YML_CONTENT" > snowflake.local.yml
+
+      - name: アプリをデプロイ
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        run: |
+          chmod 0600 .snowflake/config_ci.toml
+          poetry run snow --config-file .snowflake/config_ci.toml \
+                  app run -c dev
+
+      - name: アプリのバージョン作成
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        run: |
+          poetry run snow --config-file .snowflake/config_ci.toml \
+                  app version create test -c dev
+
+      # リスティングの作成に必須
+      - name: デフォルトバージョンの設定
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        run: |
+          poetry run snow --config-file .snowflake/config_ci.toml \
+                  sql -c dev \
+                  -q "ALTER APPLICATION PACKAGE ${{ env.APP_PACKAGE_NAME }} SET DEFAULT RELEASE DIRECTIVE VERSION = test PATCH = 0"
+
+      # 参考: https://other-docs.snowflake.com/en/progaccess/listing-manifest-reference
+      # ヒアドキュメントにおいて、文字列リテラル区切り文字$$をエスケープする必要がある点に注意
+      - name: リスティングの作成（STG環境への共有）
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          CREATE_LISTING_QUERY: |
+            create external listing ${{ env.LISTING_NAME }}
+            application package ${{ env.APP_PACKAGE_NAME }}
+            as
+            $$
+            title: 自動生成されたアプリ(${{ env.COMMIT_SHA }})
+            subtitle: By GITHUB
+            description: from ${{ env.APP_PACKAGE_NAME }}
+            listing_terms:
+              type: OFFLINE
+            targets:
+                accounts: ["${{ env.STG_ACCOUNT_IDENTIFIER }}"]
+            $$;
+        run: |
+          poetry run snow --config-file .snowflake/config_ci.toml \
+                  sql -c dev \
+                  -q "$CREATE_LISTING_QUERY"
+
+      - name: リスティングのglobal_nameを取得（STG環境でのアプリインストールに使用）
+        id: get_listing_global_name
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        run: |
+          LISTING_GLOBAL_NAME=$(poetry run snow --config-file .snowflake/config_ci.toml \
+                  sql -c dev \
+                  -q "show listings starts with '${{ env.LISTING_NAME }}'" --format json | \
+                  jq -r '.[0].global_name')
+          echo "LISTING_GLOBAL_NAME=$LISTING_GLOBAL_NAME" >> $GITHUB_ENV
+
+      - name: リスティングからアプリをSTG環境でインストール
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          CREATE_APP_QUERY: |
+            create APPLICATION ${{ env.APP_NAME }}
+            from LISTING ${{ env.LISTING_GLOBAL_NAME }} BACKGROUND_INSTALL = true
+        run: |
+          poetry run snow --config-file .snowflake/config_ci.toml \
+                  sql -c stg \
+                  -q "$CREATE_APP_QUERY"
+
+      - name: 開発環境のURLを取得
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        run: |
+          APP_URL=$(poetry run snow --config-file .snowflake/config_ci.toml \
+                  streamlit get-url ${{ env.APP_NAME }} -c dev | \
+                  sed 's/streamlit-apps/apps\/application/g')
+          echo "DEV_APP_URL=$APP_URL" >> $GITHUB_ENV
+
+      - name: ステージ環境のURLを取得
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+        run: |
+          APP_URL=$(poetry run snow --config-file .snowflake/config_ci.toml \
+                  streamlit get-url ${{ env.APP_NAME }} -c stg | \
+                  sed 's/streamlit-apps/apps\/application/g')
+          echo "STG_APP_URL=$APP_URL" >> $GITHUB_ENV
+
+      - name: PRへのコメント追加
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "$BODY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          BODY: |
+            開発環境
+            ${{ env.DEV_APP_URL }}
+            ステージ環境
+            ${{ env.STG_APP_URL }}

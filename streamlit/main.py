@@ -847,10 +847,14 @@ class AMeDASDataMaker:
          st.error("データ保存中に予期せぬエラーが発生しました。システム管理者に連絡してください。", icon="⛔")
          st.error(f"エラー内容: {str(e)}")
 
-   def highlight_columns(self, col_name: str, df: pd.DataFrame) -> pd.io.formats.style.Styler:
-      """指定されたカラムに背景色を適用する"""
-      # NEAREST_OBSERVATORY列以降のセルに背景色を適用
-      return df.style.applymap(lambda val: 'background-color: #ddffdd', subset=pd.IndexSlice[:, [col_name]])
+   def highlight_columns(self, col_name: str, df: pd.DataFrame) -> pd.DataFrame:
+      """指定されたカラム以降の背景色を適用する"""
+      # NEAREST_OBSERVATORY列以降の列を取得
+      col_index = df.columns.get_loc(col_name)  # NEAREST_OBSERVATORY列のインデックスを取得
+      columns_to_style = df.columns[col_index:]  # NEAREST_OBSERVATORY列以降の全列を取得
+
+      # 取得した列すべてに背景色を適用
+      return df.style.applymap(lambda val: 'background-color: #ddffdd', subset=columns_to_style)
 
    def run(self) -> None:
       """アプリのメイン処理を実行"""

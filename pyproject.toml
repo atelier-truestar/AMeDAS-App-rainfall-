@@ -5,6 +5,7 @@ package-mode = false
 python = "~3.11"
 snowflake-snowpark-python = "^1.21.1"
 snowflake-cli-labs = "~2.7"
+streamlit = "^1.39.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.4"

@@ -1,0 +1,42 @@
+name: Pythonコードのチェック
+
+env:
+  PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.8.3"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.py"
+  pull_request:
+    paths:
+      - "**.py"
+  workflow_dispatch:
+
+jobs:
+  lint_type_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: poetryをインストール
+        run: pipx install poetry==${{ env.POETRY_VERSION }}
+
+      - name: Pythonのセットアップ ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: 依存パッケージをインストール
+        run: poetry install
+
+      - name: Ruff checkを実行
+        run: poetry run ruff check
+
+      - name: mypyを実行
+        run: poetry run mypy .

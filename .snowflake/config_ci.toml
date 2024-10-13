@@ -1,10 +1,14 @@
 # CI環境用の設定ファイル
 # ユーザ名とぱすわーどは環境変数から取得する
 
-default_connection_name = "production"
-[connections.production]
-account = "ACCOUNT_NAME"
-role = "ROLE_NAME"
-database = "DATABASE_NAME"
-schema = "SCHEMA_NAME"
-warehouse = "WAREHOUSE_NAME"
+[connections.dev]
+account = "hqb14845"
+role = "app_dev"
+warehouse = "dev_xs"
+user = "github_actions"
+
+[connections.stg]
+account = "rgb21417"
+role = "app_dev"
+warehouse = "dev_xs"
+user = "github_actions"

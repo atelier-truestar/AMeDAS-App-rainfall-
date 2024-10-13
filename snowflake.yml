@@ -6,13 +6,14 @@ native_app:
   name: PODB_AMEDAS_RAINFALL_APP
   source_stage: app_src.stage
   artifacts:
-    - src: app/*
+    - src: src/app/*
       dest: ./
-    - streamlit/*
+    - src: src/streamlit/*
+      dest: ./streamlit/
   package:
     name: PODB_AMEDAS_RAINFALL_PACKAGE
     scripts:
-      - scripts/fetch_data.sql
+      - src/scripts/fetch_data.sql
   application:
     name: PODB_AMEDAS_RAINFALL_APP
     debug: false
